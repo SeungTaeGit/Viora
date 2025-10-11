@@ -12,6 +12,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -43,6 +45,14 @@ public class User extends BaseTimeEntity { // BaseTimeEntity를 상속받아 cre
 
     @Column
     private LocalDateTime deletedAt; // Soft Delete를 위한 칼럼
+
+    // '하나의 사용자(1)'는 '여러 개의 리뷰(N)'를 가질 수 있습니다.
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Review> reviews = new ArrayList<>();
+
+    // '하나의 사용자(1)'는 '여러 개의 댓글(N)'을 가질 수 있습니다.
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Comment> comments = new ArrayList<>();
 
     // 빌더 패턴: 객체를 생성할 때 가독성 좋고 안전하게 만들 수 있습니다.
     @Builder
