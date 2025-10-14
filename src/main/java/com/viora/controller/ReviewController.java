@@ -4,6 +4,7 @@ import com.viora.dto.ReviewCreateRequest;
 import com.viora.dto.ReviewResponse;
 import com.viora.dto.ReviewUpdateRequest;
 import com.viora.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +26,7 @@ public class ReviewController {
      * 리뷰 생성 API
      */
     @PostMapping
-    public ResponseEntity<Void> createReview(@RequestBody ReviewCreateRequest request,
+    public ResponseEntity<Void> createReview(@Valid @RequestBody ReviewCreateRequest request,
                                              @AuthenticationPrincipal UserDetails userDetails) {
         // 🔐 로그인한 사용자의 이메일 정보를 Service에 함께 넘겨줍니다.
         Long reviewId = reviewService.createReview(request, userDetails.getUsername());
@@ -55,7 +56,7 @@ public class ReviewController {
      */
     @PutMapping("/{reviewId}")
     public ResponseEntity<Void> updateReview(@PathVariable Long reviewId,
-                                             @RequestBody ReviewUpdateRequest request,
+                                             @Valid @RequestBody ReviewUpdateRequest request,
                                              @AuthenticationPrincipal UserDetails userDetails) throws AccessDeniedException {
         // 🔐 수정 권한 확인을 위해 로그인한 사용자 정보를 Service에 넘겨줍니다.
         reviewService.updateReview(reviewId, request, userDetails.getUsername());
