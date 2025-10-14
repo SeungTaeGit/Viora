@@ -63,19 +63,10 @@ public class ReviewService {
         return new ReviewResponse(review);
     }
 
-    /**
-     * 리뷰 수정
-     */
     public void updateReview(Long reviewId, ReviewUpdateRequest request, String userEmail) throws AccessDeniedException {
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+        // 1. 리뷰 찾기와 권한 검증을 private 메서드에 위임
+        Review review = findReviewAndCheckOwnership(reviewId, userEmail);
 
-        // 🔐 권한 검증 (이 책임은 Service에 있는 것이 맞습니다)
-        if (!review.getUser().getEmail().equals(userEmail)) {
-            throw new AccessDeniedException("리뷰를 수정할 권한이 없습니다.");
-        }
-
-        // 👍 Entity에게 데이터 수정을 위임! Service는 명령만 내립니다.
         review.update(
                 request.getCategory(),
                 request.getContentName(),
@@ -85,18 +76,24 @@ public class ReviewService {
         );
     }
 
-    /**
-     * 리뷰 삭제
-     */
     public void deleteReview(Long reviewId, String userEmail) throws AccessDeniedException {
+        // 1. 리뷰 찾기와 권한 검증을 private 메서드에 위임
+        Review review = findReviewAndCheckOwnership(reviewId, userEmail);
+
+        reviewRepository.delete(review);
+    }
+
+    // 2. 중복 로직을 처리할 private 헬퍼 메서드 추가
+    private Review findReviewAndCheckOwnership(Long reviewId, String userEmail) throws AccessDeniedException {
+        // 리뷰 찾기
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
-        // 🔐 권한 검증: 현재 로그인한 사용자가 리뷰 작성자인지 확인
+        // 권한 검증
         if (!review.getUser().getEmail().equals(userEmail)) {
-            throw new AccessDeniedException("리뷰를 삭제할 권한이 없습니다.");
+            throw new AccessDeniedException("해당 리뷰에 대한 권한이 없습니다.");
         }
 
-        reviewRepository.delete(review);
+        return review;
     }
 }
