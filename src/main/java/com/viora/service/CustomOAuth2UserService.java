@@ -1,5 +1,6 @@
 package com.viora.service;
 
+import com.viora.common.Constants;
 import com.viora.entity.Provider;
 import com.viora.entity.User;
 import com.viora.repository.UserRepository;
@@ -50,8 +51,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     User newUser = User.builder()
                             .email(email)
                             .nickname(nickname)
-                            .passwordHash("OAUTH_USER") // 소셜 로그인 사용자는 비밀번호가 없으므로 임시값 설정
-                            .provider(Provider.valueOf(registrationId.toUpperCase())) // "google" -> Provider.GOOGLE
+                            .passwordHash(Constants.OAUTH_USER_PASSWORD_PLACEHOLDER)
+                            .provider(Provider.valueOf(registrationId.toUpperCase()))
                             .build();
                     return userRepository.save(newUser);
                 });
