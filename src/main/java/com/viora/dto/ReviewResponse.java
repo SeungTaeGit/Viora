@@ -4,6 +4,8 @@ import com.viora.entity.Review;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 public class ReviewResponse {
@@ -15,7 +17,7 @@ public class ReviewResponse {
     private final String text;
     private final int rating;
     private final LocalDateTime createdAt;
-    // 댓글 목록도 나중에 추가 예정
+    private final List<CommentResponse> comments; // ❗️ 댓글 목록 필드 추가
 
     public ReviewResponse(Review review) {
         this.id = review.getId();
@@ -26,5 +28,10 @@ public class ReviewResponse {
         this.text = review.getText();
         this.rating = review.getRating();
         this.createdAt = review.getCreatedAt();
+
+        // ❗️ Review Entity에 있는 Comment 리스트를 CommentResponse 리스트로 변환
+        this.comments = review.getComments().stream()
+                .map(CommentResponse::new)
+                .collect(Collectors.toList());
     }
 }
