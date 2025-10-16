@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.viora.dto.MyProfileResponse;
+import com.viora.dto.ProfileUpdateRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -33,9 +35,35 @@ public class UserService {
         return userRepository.save(newUser);
     }
 
-    // findByEmail 메서드도 여기에 있어야 합니다.
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
+
+    /**
+     * 내 프로필 정보 조회
+     */
+    @Transactional(readOnly = true)
+    public MyProfileResponse getMyProfile(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        return new MyProfileResponse(user);
+    }
+
+    /**
+     * 내 프로필 정보 수정
+     */
+    public void updateMyProfile(String userEmail, ProfileUpdateRequest request) {
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        user.updateProfile(
+                request.getNickname(),
+                request.getProfileImageUrl(),
+                request.getBio()
+        );
+
+        userRepository.save(user);
     }
 }
