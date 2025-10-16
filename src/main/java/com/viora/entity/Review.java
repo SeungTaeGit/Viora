@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,10 @@ public class Review extends BaseTimeEntity {
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
+    @Column(nullable = false)
+    @ColumnDefault("0") // DB에 기본값을 0으로 설정
+    private int likeCount;
+
     @Builder
     public Review(User user, String category, String contentName, String location, String text, int rating) {
         this.user = user;
@@ -72,4 +77,11 @@ public class Review extends BaseTimeEntity {
 
     */
 
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decrementLikeCount() {
+        this.likeCount--;
+    }
 }
