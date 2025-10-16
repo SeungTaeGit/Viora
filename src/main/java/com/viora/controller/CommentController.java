@@ -9,6 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import com.viora.dto.CommentResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
@@ -43,5 +48,15 @@ public class CommentController {
                                               @AuthenticationPrincipal UserDetails userDetails) throws AccessDeniedException {
         commentService.deleteComment(commentId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    // 댓글 목록 페이징 조회를 위한 API 추가
+    // GET /api/reviews/{reviewId}/comments
+    @GetMapping("/api/reviews/{reviewId}/comments")
+    public ResponseEntity<Page<CommentResponse>> getCommentsByReview(
+            @PathVariable Long reviewId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
+        Page<CommentResponse> comments = commentService.findCommentsByReview(reviewId, pageable);
+        return ResponseEntity.ok(comments);
     }
 }
