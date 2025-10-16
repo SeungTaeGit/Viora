@@ -17,7 +17,7 @@ public class ReviewResponse {
     private final String text;
     private final int rating;
     private final LocalDateTime createdAt;
-    private final List<CommentResponse> comments;
+//    private final List<CommentResponse> comments;
 
     public ReviewResponse(Review review) {
         this.id = review.getId();
@@ -30,8 +30,8 @@ public class ReviewResponse {
         this.createdAt = review.getCreatedAt();
 
         // ❗️ Review Entity에 있는 Comment 리스트를 CommentResponse 리스트로 변환
-        this.comments = review.getComments().stream()
-                .map(CommentResponse::new)
-                .collect(Collectors.toList());
+//        this.comments = review.getComments().stream()
+//                .map(CommentResponse::new)
+//                .collect(Collectors.toList());
     }
 }
