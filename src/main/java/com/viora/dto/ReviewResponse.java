@@ -17,7 +17,7 @@ public class ReviewResponse {
     private final String text;
     private final int rating;
     private final LocalDateTime createdAt;
-    private final List<CommentResponse> comments; // ❗️ 댓글 목록 필드 추가
+    private final List<CommentResponse> comments;
 
     public ReviewResponse(Review review) {
         this.id = review.getId();
