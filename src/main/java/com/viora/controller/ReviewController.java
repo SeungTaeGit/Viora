@@ -6,10 +6,14 @@ import com.viora.dto.ReviewUpdateRequest;
 import com.viora.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
@@ -37,8 +41,9 @@ public class ReviewController {
      * 리뷰 전체 조회 API
      */
     @GetMapping
-    public ResponseEntity<List<ReviewResponse>> getAllReviews() {
-        List<ReviewResponse> reviews = reviewService.findAllReviews();
+    public ResponseEntity<Page<ReviewResponse>> getAllReviews(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<ReviewResponse> reviews = reviewService.findAllReviews(pageable);
         return ResponseEntity.ok(reviews);
     }
 
