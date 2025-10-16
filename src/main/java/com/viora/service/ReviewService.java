@@ -10,6 +10,8 @@ import com.viora.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -46,11 +48,13 @@ public class ReviewService {
     /**
      * 리뷰 전체 조회
      */
-    @Transactional(readOnly = true) // 조회 기능은 readOnly=true로 성능 최적화
-    public List<ReviewResponse> findAllReviews() {
-        return reviewRepository.findAll().stream()
-                .map(ReviewResponse::new) // review -> new ReviewResponse(review)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> findAllReviews(Pageable pageable) {
+        // 1. Repository로부터 Page<Review>를 받음
+        Page<Review> reviewPage = reviewRepository.findAll(pageable);
+
+        // 2. Page<Review>를 Page<ReviewResponse>로 변환
+        return reviewPage.map(ReviewResponse::new);
     }
 
     /**
