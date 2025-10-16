@@ -36,9 +36,6 @@ public class User extends BaseTimeEntity { // BaseTimeEntity를 상속받아 cre
     @Column(nullable = false, unique = true, length = 50)
     private String nickname;
 
-    @Column
-    private String profileImageUrl;
-
     @Enumerated(EnumType.STRING) // Enum 타입을 DB에 저장할 때 문자열 그대로 저장합니다. (예: "GOOGLE")
     @Column(nullable = false)
     private Provider provider;
@@ -54,6 +51,12 @@ public class User extends BaseTimeEntity { // BaseTimeEntity를 상속받아 cre
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Comment> comments = new ArrayList<>();
 
+    @Column(length = 500) // URL 길이를 고려하여 넉넉하게 설정
+    private String profileImageUrl;
+
+    @Column(length = 100)
+    private String bio; // 한 줄 소개 (bio)
+
     // 빌더 패턴: 객체를 생성할 때 가독성 좋고 안전하게 만들 수 있습니다.
     @Builder
     public User(String email, String passwordHash, String nickname, Provider provider) {
@@ -61,5 +64,12 @@ public class User extends BaseTimeEntity { // BaseTimeEntity를 상속받아 cre
         this.passwordHash = passwordHash;
         this.nickname = nickname;
         this.provider = provider;
+    }
+
+    public void updateProfile(String nickname, String profileImageUrl, String bio) {
+
+        this.nickname = nickname;
+        this.profileImageUrl = profileImageUrl;
+        this.bio = bio;
     }
 }
