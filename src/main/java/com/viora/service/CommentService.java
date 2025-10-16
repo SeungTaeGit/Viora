@@ -11,6 +11,9 @@ import com.viora.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.viora.dto.CommentResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.nio.file.AccessDeniedException;
 
@@ -57,5 +60,12 @@ public class CommentService {
             throw new AccessDeniedException("해당 댓글에 대한 권한이 없습니다.");
         }
         return comment;
+    }
+
+    // 댓글 목록 페이징 조회를 위한 메서드 추가
+    @Transactional(readOnly = true)
+    public Page<CommentResponse> findCommentsByReview(Long reviewId, Pageable pageable) {
+        Page<Comment> commentPage = commentRepository.findByReview_Id(reviewId, pageable);
+        return commentPage.map(CommentResponse::new);
     }
 }
