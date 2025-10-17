@@ -100,4 +100,20 @@ public class ReviewService {
 
         return review;
     }
+
+    /**
+     * 내가 쓴 리뷰 목록 조회 (페이지네이션)
+     */
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> findMyReviews(String userEmail, Pageable pageable) {
+        // 1. 이메일로 User 엔티티를 검색.
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 2. Repository에 User 객체와 Pageable 객체를 넘겨 리뷰 페이지 리턴.
+        Page<Review> reviewPage = reviewRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+
+        // 3. Page<Review>를 Page<ReviewResponse>로 변환하여 반환.
+        return reviewPage.map(ReviewResponse::new);
+    }
 }
