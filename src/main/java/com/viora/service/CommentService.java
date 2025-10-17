@@ -68,4 +68,14 @@ public class CommentService {
         Page<Comment> commentPage = commentRepository.findByReview_Id(reviewId, pageable);
         return commentPage.map(CommentResponse::new);
     }
+
+    @Transactional(readOnly = true)
+    public Page<CommentResponse> findMyComments(String userEmail, Pageable pageable) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Page<Comment> commentPage = commentRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+
+        return commentPage.map(CommentResponse::new);
+    }
 }
