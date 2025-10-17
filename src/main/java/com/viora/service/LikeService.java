@@ -9,6 +9,9 @@ import com.viora.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.viora.dto.ReviewResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -56,5 +59,17 @@ public class LikeService {
 
         // 3. 리뷰의 좋아요 카운트 1 감소
         review.decrementLikeCount();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> findMyLikedReviews(String userEmail, Pageable pageable) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 1. 사용자의 '좋아요' 기록(ReviewLike)을 페이지 단위로 가져옵니다.
+        Page<ReviewLike> likedPage = reviewLikeRepository.findByUser(user, pageable);
+
+        // 2. '좋아요' 기록 페이지에서 실제 '리뷰' 정보만 뽑아내 DTO 페이지로 변환합니다.
+        return likedPage.map(reviewLike -> new ReviewResponse(reviewLike.getReview()));
     }
 }
