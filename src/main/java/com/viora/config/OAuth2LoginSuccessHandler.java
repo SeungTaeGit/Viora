@@ -1,6 +1,5 @@
 package com.viora.config;
 
-import com.viora.entity.User;
 import com.viora.repository.UserRepository;
 import com.viora.security.JwtTokenProvider;
 import jakarta.servlet.ServletException;
@@ -25,23 +24,24 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        // OAuth2User로 캐스팅하여 사용자 정보를 빼옴
+        // OAuth2User로 캐스팅하여 사용자 정보를 빼옵니다.
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
-        // CustomOAuth2UserService에서 DB에 저장한 이메일을 가져옴
+        // CustomOAuth2UserService에서 DB에 저장한 이메일을 가져옵니다.
         String email = oAuth2User.getAttribute("email");
 
-        // 이메일로 우리 서비스의 JWT 토큰을 생성
+        // 이메일로 우리 서비스의 JWT 토큰을 생성합니다.
         String accessToken = jwtTokenProvider.createAccessToken(email);
 
-        // 프론트엔드로 리다이렉트할 URL을 만듭니다. 토큰을 쿼리 파라미터로 추가
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth-redirect")
+        // 프론트엔드로 리다이렉트할 URL을 만듭니다. 토큰을 쿼리 파라미터로 추가합니다.
+        // 예: http://localhost:5173/oauth-redirect?token=jwt_token_here
+        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/oauth-redirect")
                 .queryParam("token", accessToken)
                 .build()
                 .encode(StandardCharsets.UTF_8)
                 .toUriString();
 
-        // 생성된 URL로 리다이렉트
+        // 생성된 URL로 사용자를 리다이렉트시킵니다.
         response.sendRedirect(targetUrl);
     }
 }
