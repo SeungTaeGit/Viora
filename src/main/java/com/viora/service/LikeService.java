@@ -66,10 +66,9 @@ public class LikeService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 1. 사용자의 '좋아요' 기록(ReviewLike)을 페이지 단위로 가져옵니다.
         Page<ReviewLike> likedPage = reviewLikeRepository.findByUser(user, pageable);
 
-        // 2. '좋아요' 기록 페이지에서 실제 '리뷰' 정보만 뽑아내 DTO 페이지로 변환합니다.
-        return likedPage.map(reviewLike -> new ReviewResponse(reviewLike.getReview()));
+        // ❗️ reviewLike.getReview()와 함께 'true'를 두 번째 인자로 넘겨줍니다.
+        return likedPage.map(reviewLike -> new ReviewResponse(reviewLike.getReview(), true));
     }
 }
