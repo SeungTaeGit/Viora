@@ -5,6 +5,7 @@ import com.viora.dto.ReviewResponse;
 import com.viora.dto.ReviewUpdateRequest;
 import com.viora.entity.Review;
 import com.viora.entity.User;
+import com.viora.repository.ReviewLikeRepository;
 import com.viora.repository.ReviewRepository;
 import com.viora.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -24,6 +27,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
 
     /**
      * 리뷰 생성
@@ -50,21 +54,33 @@ public class ReviewService {
      */
     @Transactional(readOnly = true)
     public Page<ReviewResponse> findAllReviews(Pageable pageable) {
-        // 1. Repository로부터 Page<Review>를 받음
         Page<Review> reviewPage = reviewRepository.findAll(pageable);
 
-        // 2. Page<Review>를 Page<ReviewResponse>로 변환
-        return reviewPage.map(ReviewResponse::new);
+        return reviewPage.map(review -> new ReviewResponse(review, false));
     }
 
     /**
-     * 리뷰 단건 조회
+     * 리뷰 단건 조회 (isLiked 로직 추가)
      */
     @Transactional(readOnly = true)
     public ReviewResponse findReviewById(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
-        return new ReviewResponse(review);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isLiked = false;
+
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
+                    .orElse(null); // 사용자가 없을 수도 있으므로 orElse(null) 처리
+
+            if (user != null) {
+                isLiked = reviewLikeRepository.existsByUserAndReview(user, review);
+            }
+        }
+
+        return new ReviewResponse(review, isLiked);
     }
 
     public void updateReview(Long reviewId, ReviewUpdateRequest request, String userEmail) throws AccessDeniedException {
@@ -102,18 +118,15 @@ public class ReviewService {
     }
 
     /**
-     * 내가 쓴 리뷰 목록 조회 (페이지네이션)
+     * 내가 쓴 리뷰 목록 조회
      */
     @Transactional(readOnly = true)
     public Page<ReviewResponse> findMyReviews(String userEmail, Pageable pageable) {
-        // 1. 이메일로 User 엔티티를 검색.
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 2. Repository에 User 객체와 Pageable 객체를 넘겨 리뷰 페이지 리턴.
         Page<Review> reviewPage = reviewRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
-        // 3. Page<Review>를 Page<ReviewResponse>로 변환하여 반환.
-        return reviewPage.map(ReviewResponse::new);
+        return reviewPage.map(review -> new ReviewResponse(review, false));
     }
 }
