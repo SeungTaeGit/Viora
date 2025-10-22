@@ -1,5 +1,6 @@
 package com.viora.service;
 
+import com.viora.dto.UserSimpleDto;
 import com.viora.entity.Review;
 import com.viora.entity.ReviewLike;
 import com.viora.entity.User;
@@ -12,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.viora.dto.ReviewResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;              // List import
+import java.util.stream.Collectors; // Collectors import
 
 @Service
 @RequiredArgsConstructor
@@ -70,5 +74,23 @@ public class LikeService {
 
         // ❗️ reviewLike.getReview()와 함께 'true'를 두 번째 인자로 넘겨줍니다.
         return likedPage.map(reviewLike -> new ReviewResponse(reviewLike.getReview(), true));
+    }
+
+    /**
+     * 특정 리뷰를 좋아한 사용자 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<UserSimpleDto> findLikersByReviewId(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+
+        // 1. 해당 리뷰에 대한 모든 '좋아요' 기록을 찾습니다.
+        List<ReviewLike> likes = reviewLikeRepository.findByReview(review);
+
+        // 2. 각 '좋아요' 기록에서 사용자(User) 정보를 추출합니다.
+        // 3. User 엔티티를 UserSimpleDto로 변환하여 리스트로 만듭니다.
+        return likes.stream()
+                .map(like -> new UserSimpleDto(like.getUser()))
+                .collect(Collectors.toList());
     }
 }
