@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +18,6 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
 
     // 특정 User의 '좋아요' 기록을 페이지 단위로 조회
     Page<ReviewLike> findByUser(User user, Pageable pageable);
+
+    List<ReviewLike> findByReview(Review review); // 주어진 리뷰에 대한 모든 '좋아요' 찾기
 }

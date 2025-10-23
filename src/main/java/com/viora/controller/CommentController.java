@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import com.viora.dto.CommentResponse;
+import com.viora.dto.MyCommentResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -53,10 +53,10 @@ public class CommentController {
     // 댓글 목록 페이징 조회를 위한 API 추가
     // GET /api/reviews/{reviewId}/comments
     @GetMapping("/api/reviews/{reviewId}/comments")
-    public ResponseEntity<Page<CommentResponse>> getCommentsByReview(
+    public ResponseEntity<Page<MyCommentResponse>> getCommentsByReview(
             @PathVariable Long reviewId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<CommentResponse> comments = commentService.findCommentsByReview(reviewId, pageable);
+        Page<MyCommentResponse> comments = commentService.findCommentsByReview(reviewId, pageable);
         return ResponseEntity.ok(comments);
     }
 }

@@ -22,6 +22,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     // Spring Data JPA가 메서드 이름을 보고 SQL을 자동으로 생성
     Page<Comment> findByReview_Id(Long reviewId, Pageable pageable);
 
+    // 특정 리뷰(Review)에 달린 모든 댓글을 페이지 단위로 찾는 기능
+    Page<Comment> findByReview(Review review, Pageable pageable); // Page 반환 타입으로 수정
+
     // 특정 User가 작성한 Comment들을 페이지 단위로 조회 (최신순으로)
     Page<Comment> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 }
