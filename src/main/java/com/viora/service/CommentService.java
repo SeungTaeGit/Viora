@@ -2,6 +2,7 @@ package com.viora.service;
 
 import com.viora.dto.CommentCreateRequest;
 import com.viora.dto.CommentUpdateRequest;
+import com.viora.dto.MyCommentResponse;
 import com.viora.entity.Comment;
 import com.viora.entity.Review;
 import com.viora.entity.User;
@@ -11,7 +12,6 @@ import com.viora.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.viora.dto.CommentResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -62,20 +62,25 @@ public class CommentService {
         return comment;
     }
 
-    // 댓글 목록 페이징 조회를 위한 메서드 추가
+    // 댓글 목록 페이징 조회를 위한 메서드 (이 메서드는 특정 리뷰의 댓글을 가져옴)
     @Transactional(readOnly = true)
-    public Page<CommentResponse> findCommentsByReview(Long reviewId, Pageable pageable) {
-        Page<Comment> commentPage = commentRepository.findByReview_Id(reviewId, pageable);
-        return commentPage.map(CommentResponse::new);
+    public Page<MyCommentResponse> findCommentsByReview(Long reviewId, Pageable pageable) {
+        // reviewId로 Review 엔티티를 찾아야 findByReview_Id 대신 findByReview 사용 가능
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+        Page<Comment> commentPage = commentRepository.findByReview(review, pageable); // findByReview 사용 권장
+        return commentPage.map(MyCommentResponse::new); // MyCommentResponse 사용
     }
 
+
+    // '내가 쓴 댓글 목록' 조회를 위한 메서드
     @Transactional(readOnly = true)
-    public Page<CommentResponse> findMyComments(String userEmail, Pageable pageable) {
+    public Page<MyCommentResponse> findMyComments(String userEmail, Pageable pageable) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Page<Comment> commentPage = commentRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
-        return commentPage.map(CommentResponse::new);
+        return commentPage.map(MyCommentResponse::new);
     }
 }
