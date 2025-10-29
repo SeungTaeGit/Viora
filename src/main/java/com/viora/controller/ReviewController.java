@@ -38,16 +38,6 @@ public class ReviewController {
     }
 
     /**
-     * 리뷰 전체 조회 API
-     */
-    @GetMapping
-    public ResponseEntity<Page<ReviewResponse>> getAllReviews(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<ReviewResponse> reviews = reviewService.findAllReviews(pageable);
-        return ResponseEntity.ok(reviews);
-    }
-
-    /**
      * 리뷰 단건 조회 API
      */
     @GetMapping("/{reviewId}")
@@ -77,5 +67,26 @@ public class ReviewController {
         // 🔐 삭제 권한 확인을 위해 로그인한 사용자 정보를 Service에 넘겨줍니다.
         reviewService.deleteReview(reviewId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 리뷰 전체 조회 API (기본: 최신순)
+     */
+    @GetMapping
+    public ResponseEntity<Page<ReviewResponse>> getAllReviews(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<ReviewResponse> reviews = reviewService.findAllReviews(pageable);
+        return ResponseEntity.ok(reviews);
+    }
+
+    /**
+     * 인기 리뷰 조회 API (좋아요 순)
+     */
+    @GetMapping("/popular") // 새로운 경로 추가
+    public ResponseEntity<Page<ReviewResponse>> getPopularReviews(
+            // 정렬 기준을 likeCount로 변경할 필요 없음 (Service에서 이미 처리)
+            @PageableDefault(size = 10) Pageable pageable) {
+        Page<ReviewResponse> reviews = reviewService.findPopularReviews(pageable);
+        return ResponseEntity.ok(reviews);
     }
 }
