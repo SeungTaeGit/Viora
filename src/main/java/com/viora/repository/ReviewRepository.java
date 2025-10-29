@@ -17,6 +17,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // SELECT * FROM reviews WHERE category = ? ORDER BY created_at DESC
     List<Review> findByCategoryOrderByCreatedAtDesc(String category);
 
+    // ❗️ '좋아요' 많은 순으로 리뷰를 찾는 기능 추가
+    Page<Review> findAllByOrderByLikeCountDesc(Pageable pageable);
+
     // 특정 User가 작성한 Review들을 페이지 단위로 조회 (최신순으로 정렬)
     Page<Review> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 }
