@@ -129,4 +129,16 @@ public class ReviewService {
 
         return reviewPage.map(review -> new ReviewResponse(review, false));
     }
+
+    /**
+     * 인기 리뷰 목록 조회 (좋아요 순, 페이지네이션)
+     */
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> findPopularReviews(Pageable pageable) {
+        Page<Review> reviewPage = reviewRepository.findAllByOrderByLikeCountDesc(pageable);
+
+        // ❗️ isLiked 계산 로직 추가 필요 (또는 기본값 false 사용)
+        // 이 목록은 특정 사용자를 위한 것이 아니므로, isLiked는 false로 설정하는 것이 간단합니다.
+        return reviewPage.map(review -> new ReviewResponse(review, false));
+    }
 }
