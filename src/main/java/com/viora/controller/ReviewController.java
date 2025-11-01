@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
@@ -88,5 +89,18 @@ public class ReviewController {
             @PageableDefault(size = 10) Pageable pageable) {
         Page<ReviewResponse> reviews = reviewService.findPopularReviews(pageable);
         return ResponseEntity.ok(reviews);
+    }
+
+    /**
+     * 리뷰 검색 API
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<ReviewResponse>> searchReviews(
+            @RequestParam("type") String type, // 검색 유형 (contentName, text 등)
+            @RequestParam("keyword") String keyword, // 검색어
+            Pageable pageable) { // 페이지 정보
+
+        Page<ReviewResponse> results = reviewService.searchReviews(type, keyword, pageable);
+        return ResponseEntity.ok(results);
     }
 }
