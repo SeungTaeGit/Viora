@@ -9,6 +9,7 @@ import com.viora.repository.ReviewLikeRepository;
 import com.viora.repository.ReviewRepository;
 import com.viora.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional // 클래스 레벨에 선언하면 모든 public 메서드에 트랜잭션이 적용됩니다.
@@ -139,6 +141,39 @@ public class ReviewService {
 
         // ❗️ isLiked 계산 로직 추가 필요 (또는 기본값 false 사용)
         // 이 목록은 특정 사용자를 위한 것이 아니므로, isLiked는 false로 설정하는 것이 간단합니다.
+        return reviewPage.map(review -> new ReviewResponse(review, false));
+    }
+
+    /**
+     * 검색 유형과 키워드를 받아 리뷰를 검색하는 메서드
+     */
+    public Page<ReviewResponse> searchReviews(String searchType, String keyword, Pageable pageable) {
+        Page<Review> reviewPage;
+
+        // 검색 유형(searchType)에 따라 분기 처리
+        switch (searchType) {
+            case "contentName":
+                reviewPage = reviewRepository.findByContentNameContaining(keyword, pageable);
+                break;
+            case "text":
+                reviewPage = reviewRepository.findByTextContaining(keyword, pageable);
+                break;
+            case "category":
+                reviewPage = reviewRepository.findByCategory(keyword, pageable);
+                break;
+            case "author":
+                reviewPage = reviewRepository.findByUser_NicknameContaining(keyword, pageable);
+                break;
+            default:
+                // 기본값 또는 예외 처리 (여기서는 기본적으로 전체 목록 반환)
+                log.warn("알 수 없는 검색 유형입니다: {}", searchType);
+                reviewPage = reviewRepository.findAll(pageable);
+                break;
+        }
+
+        // 검색 결과(Page<Review>)를 Page<ReviewResponse>로 변환
+        // ❗️ 로그인 상태에 따라 'isLiked'를 다르게 설정해야 함
+        // (간결함을 위해 여기서는 'false'로 통일, 추후 개선 가능)
         return reviewPage.map(review -> new ReviewResponse(review, false));
     }
 }
