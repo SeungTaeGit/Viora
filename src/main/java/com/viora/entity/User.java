@@ -82,5 +82,7 @@ public class User extends BaseTimeEntity {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
+
+    public void changePassword(String newPassword) { this.passwordHash = newPassword; }
 }
 
