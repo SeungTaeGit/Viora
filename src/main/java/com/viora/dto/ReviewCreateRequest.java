@@ -24,4 +24,6 @@ public class ReviewCreateRequest {
     @Min(value = 1, message = "별점은 1점 이상이어야 합니다.") // 최솟값
     @Max(value = 5, message = "별점은 5점 이하이어야 합니다.") // 최댓값
     private int rating;
+
+    private String imageUrl;
 }
