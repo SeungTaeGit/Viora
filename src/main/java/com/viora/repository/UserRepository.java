@@ -25,4 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> { // <엔티�
 
     // email을 가진 사용자가 이미 존재하는지 확인하는 메서드 (true/false 반환)
     boolean existsByEmail(String email);
+
+    Optional<User> findByNickname(String nickname);
+    Optional<User> findByEmailAndNickname(String email, String nickname);
 }

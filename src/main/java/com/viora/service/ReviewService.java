@@ -45,6 +45,7 @@ public class ReviewService {
                 .location(request.getLocation())
                 .text(request.getText())
                 .rating(request.getRating())
+                .imageUrl(request.getImageUrl())
                 .build();
 
         Review savedReview = reviewRepository.save(review);
@@ -86,7 +87,6 @@ public class ReviewService {
     }
 
     public void updateReview(Long reviewId, ReviewUpdateRequest request, String userEmail) throws AccessDeniedException {
-        // 1. 리뷰 찾기와 권한 검증을 private 메서드에 위임
         Review review = findReviewAndCheckOwnership(reviewId, userEmail);
 
         review.update(
@@ -94,18 +94,17 @@ public class ReviewService {
                 request.getContentName(),
                 request.getLocation(),
                 request.getText(),
-                request.getRating()
+                request.getRating(),
+                request.getImageUrl()
         );
     }
 
     public void deleteReview(Long reviewId, String userEmail) throws AccessDeniedException {
-        // 1. 리뷰 찾기와 권한 검증을 private 메서드에 위임
         Review review = findReviewAndCheckOwnership(reviewId, userEmail);
 
         reviewRepository.delete(review);
     }
 
-    // 2. 중복 로직을 처리할 private 헬퍼 메서드 추가
     private Review findReviewAndCheckOwnership(Long reviewId, String userEmail) throws AccessDeniedException {
         // 리뷰 찾기
         Review review = reviewRepository.findById(reviewId)

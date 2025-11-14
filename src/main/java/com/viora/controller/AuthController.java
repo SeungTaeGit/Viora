@@ -1,10 +1,6 @@
 package com.viora.controller;
 
-// src/main/java/com/viora/controller/AuthController.java
-
-import com.viora.dto.LoginRequest;
-import com.viora.dto.SignUpRequest;
-import com.viora.dto.TokenResponse;
+import com.viora.dto.*;
 import com.viora.entity.User;
 import com.viora.security.JwtTokenProvider;
 import com.viora.service.AuthService;
@@ -20,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor // final 필드에 대한 생성자 자동 생성
+@RequiredArgsConstructor
 public class AuthController {
 
     private final UserService userService;
@@ -30,7 +26,6 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signUp(@RequestBody SignUpRequest request) {
-        // 3개의 파라미터를 모두 넘겨줍니다.
         userService.saveUser(request.getEmail(), request.getPassword(), request.getNickname());
         return ResponseEntity.ok("회원가입 성공");
     }
@@ -39,8 +34,19 @@ public class AuthController {
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest request) {
         User user = userService.findByEmail(request.getEmail());
 
-        // authService의 login 메서드를 호출합니다.
         TokenResponse tokenResponse = authService.login(request);
         return ResponseEntity.ok(tokenResponse);
+    }
+
+    @PostMapping("/find-email")
+    public ResponseEntity<String> findEmail(@RequestBody FindEmailRequest request) {
+        String maskedEmail = authService.findEmail(request);
+        return ResponseEntity.ok(maskedEmail);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
 }
