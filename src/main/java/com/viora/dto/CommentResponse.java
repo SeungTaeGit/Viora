@@ -15,7 +15,7 @@ public class CommentResponse {
 
     public CommentResponse(Comment comment) {
         this.id = comment.getId();
-        this.authorNickname = comment.getUser().getNickname();
+        this.authorNickname = comment.getUser() != null ? comment.getUser().getNickname() : "알 수 없음";
         this.text = comment.getText();
         this.createdAt = comment.getCreatedAt();
         this.updatedAt = comment.getUpdatedAt();
