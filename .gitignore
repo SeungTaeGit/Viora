@@ -7,6 +7,8 @@ build/
 
 # AWS Secrets
 src/main/resources/application-aws.properties
+/src/main/resources/application-oauth.properties
+/src/main/resources/application-recombee.properties
 
 ### STS ###
 .apt_generated
@@ -50,5 +52,3 @@ out/
 
 # Windows thumbnail files
 Thumbs.db
-
-/src/main/resources/application-oauth.properties
