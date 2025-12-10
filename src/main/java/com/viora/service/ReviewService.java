@@ -1,5 +1,10 @@
 package com.viora.service;
 
+import com.recombee.api_client.RecombeeClient;
+import com.recombee.api_client.api_requests.AddRating;
+import com.recombee.api_client.api_requests.SetItemValues;
+import com.recombee.api_client.exceptions.ApiException;
+import com.recombee.api_client.api_requests.AddDetailView;
 import com.viora.dto.ReviewCreateRequest;
 import com.viora.dto.ReviewResponse;
 import com.viora.dto.ReviewUpdateRequest;
@@ -10,6 +15,7 @@ import com.viora.repository.ReviewRepository;
 import com.viora.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -17,8 +23,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Date;
 import java.nio.file.AccessDeniedException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,6 +36,7 @@ import java.util.stream.Collectors;
 @Transactional // 클래스 레벨에 선언하면 모든 public 메서드에 트랜잭션이 적용됩니다.
 public class ReviewService {
 
+    private final RecombeeClient recombeeClient;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final ReviewLikeRepository reviewLikeRepository;
@@ -49,7 +59,29 @@ public class ReviewService {
                 .build();
 
         Review savedReview = reviewRepository.save(review);
-        return savedReview.getId();
+        Long reviewId = savedReview.getId();
+        Long userId = user.getId();
+
+        try {
+            Map<String, Object> itemValues = new HashMap<>();
+            itemValues.put("category", review.getCategory());
+            itemValues.put("contentName", review.getContentName());
+            itemValues.put("location", review.getLocation());
+            recombeeClient.send(new SetItemValues(reviewId.toString(), itemValues)
+                    .setCascadeCreate(true));
+
+            double normalizedRating = (review.getRating() - 3.0) / 2.0;
+            recombeeClient.send(new AddRating(userId.toString(), reviewId.toString(), normalizedRating)
+                    .setCascadeCreate(true)
+                    .setTimestamp(new Date(System.currentTimeMillis())));
+
+            log.info("Recombee 데이터 동기화 성공: Review ID {}, User ID {}", reviewId, userId);
+
+        } catch (ApiException e) {
+            log.error("Recombee 데이터 동기화 실패: {}", e.getMessage());
+        }
+
+        return reviewId;
     }
 
     /**
@@ -63,7 +95,7 @@ public class ReviewService {
     }
 
     /**
-     * 리뷰 단건 조회 (isLiked 로직 추가)
+     * 리뷰 단건 조회 (Recombee 동기화)
      */
     @Transactional(readOnly = true)
     public ReviewResponse findReviewById(Long reviewId) {
@@ -72,14 +104,27 @@ public class ReviewService {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean isLiked = false;
+        User user = null;
 
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             String userEmail = authentication.getName();
-            User user = userRepository.findByEmail(userEmail)
-                    .orElse(null); // 사용자가 없을 수도 있으므로 orElse(null) 처리
+            user = userRepository.findByEmail(userEmail).orElse(null);
 
             if (user != null) {
                 isLiked = reviewLikeRepository.existsByUserAndReview(user, review);
+
+                try {
+                    String userIdStr = user.getId().toString();
+                    String reviewIdStr = review.getId().toString();
+
+                    recombeeClient.send(new AddDetailView(userIdStr, reviewIdStr)
+                            .setCascadeCreate(true)
+                            .setTimestamp(new Date())
+                    );
+                    log.debug("Recombee 'AddDetailView' 동기화 성공: User ID {}, Review ID {}", userIdStr, reviewIdStr);
+                } catch (ApiException e) {
+                    log.warn("Recombee 'AddDetailView' 동기화 실패: {}", e.getMessage());
+                }
             }
         }
 

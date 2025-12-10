@@ -1,10 +1,14 @@
 package com.viora.service;
 
+import com.recombee.api_client.RecombeeClient;
+import com.recombee.api_client.api_requests.SetUserValues;
+import com.recombee.api_client.exceptions.ApiException;
 import com.viora.dto.MyProfileResponse;
 import com.viora.dto.ProfileUpdateRequest;
 import com.viora.entity.User;
 import com.viora.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -12,6 +16,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -19,6 +27,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RecombeeClient recombeeClient;
 
     /**
      * Spring Security의 UserDetailsService 구현
@@ -38,7 +47,7 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * 회원가입
+     * 회원가입 (Recombee 동기화)
      */
     public User saveUser(String email, String password, String nickname) {
         if (userRepository.existsByEmail(email)) {
@@ -52,7 +61,23 @@ public class UserService implements UserDetailsService {
                 .provider(com.viora.entity.Provider.VIORA)
                 .build();
 
-        return userRepository.save(newUser);
+        User savedUser = userRepository.save(newUser);
+
+        try {
+            String userIdStr = savedUser.getId().toString();
+
+            Map<String, Object> userValues = new HashMap<>();
+            userValues.put("nickname", savedUser.getNickname());
+
+            recombeeClient.send(new SetUserValues(userIdStr, userValues)
+                    .setCascadeCreate(true)
+            );
+            log.info("Recombee 'SetUserValues' 동기화 성공: User ID {}", userIdStr);
+        } catch (ApiException e) {
+            log.error("Recombee 'SetUserValues' 동기화 실패: {}", e.getMessage());
+        }
+
+        return savedUser;
     }
 
     /**

@@ -7,10 +7,10 @@ import com.viora.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -30,9 +30,7 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
-    /**
-     * CORS 설정을 위한 Bean (프론트엔드 연동에 필수)
-     */
+    // CORS 설정을 위한 Bean
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -41,60 +39,57 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // 모든 경로에 대해 적용
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
-    /**
-     * API 경로 보안 필터 체인 (JWT 인증 필요)
-     */
     @Bean
-    @Order(2) // 두 번째 순서로 적용
-    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .securityMatcher("/api/**") // 이 필터는 /api/ 로 시작하는 경로에만 적용
-                .httpBasic(config -> config.disable())
-                .csrf(config -> config.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS Preflight 요청 허용
-                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll() // 리뷰 조회는 누구나
-                        .anyRequest().authenticated() // 그 외 /api/** 는 인증 필요
-                )
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+                .requestMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/favicon.ico",
+                        "/error"
                 );
-        return http.build();
     }
 
     /**
-     * 인증(Auth) 경로 보안 필터 체인 (JWT 인증 불필요)
+     * 통합 보안 필터 체인
      */
     @Bean
-    @Order(1) // 첫 번째 순서로 적용
-    public SecurityFilterChain authFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .securityMatcher("/auth/**", "/login/**", "/oauth2/**") // 인증 관련 경로에만 적용
-                .httpBasic(config -> config.disable())
                 .csrf(config -> config.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .formLogin(config -> config.disable())
+                .httpBasic(config -> config.disable())
+
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS Preflight 요청 허용
-                        .anyRequest().permitAll() // 이 경로들은 모두 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        .requestMatchers("/auth/**", "/login/**", "/oauth2/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+
+                        .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2 -> oauth2 // OAuth2 설정은 여기에만 적용
+
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                )
+
+                .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2LoginSuccessHandler)
-                )
-                .formLogin(config -> config.disable()); // Spring 기본 폼 로그인 비활성화
+                );
 
         return http.build();
     }
-
 }
-
