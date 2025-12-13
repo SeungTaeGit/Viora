@@ -5,7 +5,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-# AWS Secrets
+# Secrets
 src/main/resources/application-aws.properties
 /src/main/resources/application-oauth.properties
 /src/main/resources/application-recombee.properties
